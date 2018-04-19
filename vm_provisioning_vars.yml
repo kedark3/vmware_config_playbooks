@@ -1,0 +1,24 @@
+---
+vcenter_hostname: #hostname or ip add
+vcenter_username: administrator@vsphere.local
+vcenter_password: xxxx
+validate_certs_flag: no  # flag that will control if we validate certs or not
+vm_folder: /VMs_Created_via_Ansible
+datacenter_name: Datacenter
+vm_network_name: VM Network
+wait_for_ip: false
+force_poweroff_and_remove_flag: true  # will force power off VMs and remove
+vms:
+  - name: test_vm_1_rhel7.4_server
+    size_gb: 20
+    template: rhel7.4-server
+    num_cpus: 2
+    num_cpu_cores_per_socket: 2
+    memory_mb: 4096
+  - name: test_vm_2_centos7-workstation
+    size_gb: 25
+    template: centos7-workstation
+    num_cpus: 2
+    memory_mb: 3072
+    num_cpu_cores_per_socket: 1
+# add more if needed

@@ -1,0 +1,62 @@
+---
+- name: Playbook to provision VMs on the vCenter 
+  hosts: localhost
+  tasks: 
+    - name: Include vars file
+      include_vars:
+        file: vm_provisioning_vars.yml
+      tags:
+        - provision
+        - remove
+
+    - name: Create a VM from a template
+      vmware_guest:
+        annotation: Created via Ansible Playbook by KKULKARN@REDHAT.COM
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}" 
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs_flag }}"
+        folder: "{{ vm_folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+        template: "{{ item.template }}"
+        datacenter: "{{ datacenter_name }}"
+        disk:
+        - type: thin 
+          size_gb: "{{ item.size_gb }}"
+          autoselect_datastore: yes
+        hardware:
+          memory_mb: "{{ item.memory_mb }}"
+          num_cpus: "{{ item.num_cpus }}"
+          num_cpu_cores_per_socket: "{{ item.num_cpu_cores_per_socket }}"
+          #scsi: lsilogic
+          #memory_reservation: 512
+          #memory_reservation_lock: True
+          #mem_limit: 8096
+          #mem_reservation: 4096
+          #cpu_limit: 8096
+          #cpu_reservation: 4096
+          #hotadd_cpu: True
+          #hotremove_cpu: True
+          #hotadd_memory: False
+        networks:
+        - name: "{{ vm_network_name }}"
+          #mac: aa:bb:dd:aa:00:14
+        wait_for_ip_address: "{{ wait_for_ip }}"
+      delegate_to: localhost
+      register: deploy
+      loop: "{{ vms }}"
+      tags: provision
+
+    - name: Remove VMs from vCenter using vm name from vm_provisioning_vars.yml
+      vmware_guest: 
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        folder: "{{ vm_folder }}"
+        name: "{{ item.name }}"
+        state: absent
+        force: "{{ force_poweroff_and_remove_flag }}"
+        validate_certs: "{{ validate_certs_flag }}"
+      loop: "{{ vms }}"
+      tags: remove

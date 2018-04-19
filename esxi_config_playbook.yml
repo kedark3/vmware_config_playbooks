@@ -1,0 +1,67 @@
+---
+- name: Playbook to Configure the ESXi Host Post Installation
+  # This playbook needs pyvmomi installed on your local system
+  # or on the system where you are running this playbook 
+  # because it delegates tasks  to your localhost 
+  hosts: localhost
+  tasks:
+    - name: Include vars file
+      include_vars:
+        file: vars.yml
+      tags:
+        - service_facts
+
+    - name: configure NTP for "{{ esxi }}" ESXI hosts using hostname
+      local_action:
+        module: vmware_host_ntp
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ item.esxi_hostname }}"
+        state: present
+        ntp_servers:
+          - x.x.x.x # update this
+        validate_certs: no
+      with_items: "{{ esxi }}"
+      tags: ntp_with_hostname
+
+
+    - name: configure NTP for all ESXi hosts in cluster -> "{{ cluster }}" 
+      local_action:
+        module: vmware_host_ntp
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ cluster }}"
+        esxi_hostname: "{{ item.esxi_hostname }}"
+        state: present 
+        ntp_servers:
+          - x.x.x.x # update this
+        validate_certs: no
+      with_items: "{{ esxi }}"
+      tags: ntp_with_cluster
+
+    - name: Gather facts about all ESXi Host in given Cluster
+      vmware_host_service_facts:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ cluster }}"
+        validate_certs: no
+      tags: service_facts
+
+    - name: Configure SSH and ESXi Shell to run on the hosts in cluster -> "{{ cluster }}"
+      vmware_host_service_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ cluster }}"
+        service_name: "{{ item }}"
+        service_policy: on
+        state: present
+        validate_certs: no
+      with_items:
+        - TSM
+        - TSM-SSH
+        - ntpd
+      tags: configure_shell_ssh_ntp

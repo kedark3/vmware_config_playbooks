@@ -1,0 +1,13 @@
+---
+vcenter_hostname: #hostname or ip addr
+vcenter_username: administrator@vsphere.local
+vcenter_password: xxxx
+cluster: Cluster
+datacenter_name: Datacenter
+esxi:
+  - esxi_hostname: xxxx.com #hostname or ip addr
+    esxi_username: xxx
+    esxi_password: xxxx
+  - esxi_hostname: xxxx.com #hostname or ip addr
+    esxi_username: xxxx
+    esxi_password: xxxx

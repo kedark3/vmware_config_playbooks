@@ -1,0 +1,52 @@
+---
+- name: Playbook to Configure the vCenter Appliance Post Installation
+  # This playbook needs pyvmomi installed on your local system
+  # or on the system where you are running this playbook 
+  # because it delegates tasks  to your localhost 
+  hosts: localhost
+  tasks:
+    - name: Include vars
+      include_vars:
+        file: vars.yml
+      tags:
+        - add_host
+
+    - name: Create "{{ datacenter_name }}"
+      local_action:
+        module: vmware_datacenter
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ datacenter_name }}" 
+        state: present 
+        validate_certs: no
+
+    - name: Create the Cluster
+      local_action:
+        module: vmware_cluster
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ datacenter_name }}"
+        cluster_name: cluster
+        validate_certs: no
+        enable_ha: no 
+        enable_drs: yes
+        state: present
+
+    - name: Add ESXi Host "{{ esxi }}" to "{{ datacenter_name }}"
+      local_action:
+        module: vmware_host
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        datacenter_name: "{{ datacenter_name }}"
+        cluster_name: "cluster"
+        esxi_hostname: '{{ item.esxi_hostname }}'
+        esxi_username: '{{ item.esxi_username }}'
+        esxi_password: '{{ item.esxi_password }}'
+        state: present
+        validate_certs: no
+      with_items: "{{ esxi }}"
+      tags:
+        - add_host
